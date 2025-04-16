@@ -68,32 +68,31 @@ from PIL import Image
 import gdown
 import os
 
-# Set page config (must be first command)
+# Set page config (must be first Streamlit command)
 st.set_page_config(page_title="Plant Disease Detector", page_icon="🌿")
 
-# --- Model file and Google Drive URL ---
+# --- Google Drive Model URL ---
 model_file = "plant_model.h5"
 file_id = "1KnQ0U6y-nX4t428Yd0wMuq3y7qIe44Di"
 url = f"https://drive.google.com/uc?id={file_id}"
 
-# --- Download model if not already present ---
+# --- Download model if not present ---
 if not os.path.exists(model_file):
-    with st.spinner("🔄 Downloading model file from Google Drive..."):
+    with st.spinner("🔄 Downloading model from Google Drive..."):
         try:
             gdown.download(url, model_file, quiet=False, fuzzy=True)
         except Exception as e:
             st.error(f"❌ Error downloading model: {e}")
             st.stop()
 
-# --- Load the model ---
+# --- Load model (cached) ---
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model(model_file)
-    return model
+    return tf.keras.models.load_model(model_file)
 
 model = load_model()
 
-# --- Class labels (update these to your actual classes, ensure you have 38 classes here) ---
+# --- Class labels (38 classes) ---
 class_names = [
     'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
     'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
@@ -108,40 +107,34 @@ class_names = [
     'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite',
     'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
     'Tomato___healthy'
-]  # Ensure you have 38 labels
+]
 
-# --- Streamlit UI ---
+# --- UI ---
 st.title("🌿 Plant Disease Detection")
-st.markdown("Upload a plant leaf image to detect possible diseases using a deep learning model.")
+st.markdown("Upload a plant leaf image to classify the disease using a deep learning model.")
 
-# --- File uploader ---
+# --- Upload image ---
 uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    # --- Preprocessing ---
-    img = image.resize((224, 224))  # Update this size if your model uses something else
+    # Preprocess image
+    img = image.resize((224, 224))
     img_array = np.array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    # --- Prediction ---
-    prediction = model.predict(img_array)
-    
-    # Debugging: Print the raw prediction output
-    st.write(f"Prediction array: {prediction}")  # Print raw prediction
-    
-    # Check the prediction shape to ensure it's correct
-    st.write(f"Prediction shape: {prediction.shape}")
+    # Button to classify
+    if st.button("🧪 Classify"):
+        prediction = model.predict(img_array)
+        if prediction.shape[1] == len(class_names):
+            predicted_index = np.argmax(prediction)
+            predicted_class = class_names[predicted_index]
+            confidence = np.max(prediction)
+            st.success(f"🧠 Prediction: **{predicted_class}**")
+            st.info(f"📊 Confidence: {confidence * 100:.2f}%")
+        else:
+            st.error("❌ Invalid model output. Check number of classes or input shape.")
 
-    # Ensure that the prediction array has the expected dimensions
-    if prediction.shape[0] > 0 and prediction.shape[1] == len(class_names):
-        predicted_index = np.argmax(prediction)
-        st.write(f"Predicted index: {predicted_index}")  # Debugging: Print predicted index
-        confidence = np.max(prediction)
-        st.success(f"🧠 Prediction: **{class_names[predicted_index]}**")
-        st.info(f"📊 Confidence: {confidence * 100:.2f}%")
-    else:
-        st.error("❌ Invalid prediction output. Please check the model input and output.")
 
