@@ -1,3 +1,4 @@
+'''
 import os
 import json
 from PIL import Image
@@ -58,3 +59,58 @@ if uploaded_image is not None:
             # Preprocess the uploaded image and predict the class
             prediction = predict_image_class(model, uploaded_image, class_indices)
             st.success(f'Prediction: {str(prediction)}')
+'''
+
+import streamlit as st
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+import gdown
+import os
+
+# Google Drive model download
+model_file = "plant_model.h5"
+file_id = "1KnQ0U6y-nX4t428Yd0wMuq3y7qIe44Di"
+url = f"https://drive.google.com/uc?id={file_id}"
+
+# Download model if not present
+if not os.path.exists(model_file):
+    with st.spinner("Downloading model... Please wait."):
+        gdown.download(url, model_file, quiet=False)
+
+# Load model with caching
+@st.cache_resource
+def load_model():
+    model = tf.keras.models.load_model(model_file)
+    return model
+
+model = load_model()
+
+# Example class labels – update with your actual class names
+class_names = ['Apple Scab', 'Black Rot', 'Cedar Apple Rust', 'Healthy']
+
+# App UI
+st.set_page_config(page_title="Plant Disease Detection", page_icon="🌿")
+st.title("🌿 Plant Disease Detection")
+st.write("Upload a plant leaf image and detect possible diseases using a trained deep learning model.")
+
+# File uploader
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+
+    # Preprocess image (resize and normalize)
+    img = image.resize((224, 224))  # Change if your model uses different input size
+    img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)  # Shape: (1, 224, 224, 3)
+
+    # Predict
+    prediction = model.predict(img_array)
+    predicted_index = np.argmax(prediction)
+    confidence = np.max(prediction)
+
+    # Show prediction
+    st.success(f"🧠 Predicted Disease: **{class_names[predicted_index]}**")
+    st.info(f"📊 Confidence: {confidence * 100:.2f}%")
