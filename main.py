@@ -126,7 +126,49 @@ if uploaded_file is not None:
     img_array = np.expand_dims(img_array, axis=0)
 
     # Button to classify
-    if st.button("🧪 Classify"):
+   st.markdown(
+    """
+    <style>
+    .center-button {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .center-button button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 15px 30px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .center-button button:hover {
+        background-color: #45a049;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Create centered button and trigger prediction
+button_clicked = st.markdown(
+    """
+    <div class="center-button">
+        <form action="" method="post">
+            <button type="submit">🧪 Classify</button>
+        </form>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Handle prediction logic
+
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if st.button("🧪 Classify", use_container_width=True):
         prediction = model.predict(img_array)
         if prediction.shape[1] == len(class_names):
             predicted_index = np.argmax(prediction)
@@ -136,5 +178,4 @@ if uploaded_file is not None:
             st.info(f"📊 Confidence: {confidence * 100:.2f}%")
         else:
             st.error("❌ Invalid model output. Check number of classes or input shape.")
-
 
