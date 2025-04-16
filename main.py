@@ -114,14 +114,21 @@ if uploaded_file is not None:
 
     # --- Prediction ---
     prediction = model.predict(img_array)
-    st.write(f"Prediction array: {prediction}")  # Debugging: Check the raw prediction output
+    
+    # Debugging: Print the raw prediction output
+    st.write(f"Prediction array: {prediction}")  # Print raw prediction
+    
+    # Check the prediction shape to ensure it's correct
+    st.write(f"Prediction shape: {prediction.shape}")
 
     # Ensure that the prediction array has the expected dimensions
-    if prediction.shape[0] > 0:
+    if prediction.shape[0] > 0 and prediction.shape[1] == len(class_names):
         predicted_index = np.argmax(prediction)
+        st.write(f"Predicted index: {predicted_index}")  # Debugging: Print predicted index
         confidence = np.max(prediction)
         st.success(f"🧠 Prediction: **{class_names[predicted_index]}**")
         st.info(f"📊 Confidence: {confidence * 100:.2f}%")
     else:
-        st.error("❌ Prediction failed. Please check the model input and output.")
+        st.error("❌ Invalid prediction output. Please check the model input and output.")
+
 
