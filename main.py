@@ -125,45 +125,7 @@ if uploaded_file is not None:
     img_array = np.array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    # Button to classify
-   st.markdown(
-    """
-    <style>
-    .center-button {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-    .center-button button {
-        background-color: #4CAF50;
-        color: white;
-        padding: 15px 30px;
-        font-size: 18px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-    .center-button button:hover {
-        background-color: #45a049;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Create centered button and trigger prediction
-button_clicked = st.markdown(
-    """
-    <div class="center-button">
-        <form action="" method="post">
-            <button type="submit">🧪 Classify</button>
-        </form>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
+  
 # Handle prediction logic
 
 col1, col2, col3 = st.columns([1, 2, 1])
