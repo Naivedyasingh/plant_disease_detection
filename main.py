@@ -68,8 +68,11 @@ from PIL import Image
 import gdown
 import os
 
+# Set page config (must be first command)
+st.set_page_config(page_title="Plant Disease Detector", page_icon="🌿")
+
 # --- Model file and Google Drive URL ---
-model_file = "plant_disease_prediction_model.h5"
+model_file = "plant_model.h5"
 file_id = "1KnQ0U6y-nX4t428Yd0wMuq3y7qIe44Di"
 url = f"https://drive.google.com/uc?id={file_id}"
 
@@ -94,7 +97,6 @@ model = load_model()
 class_names = ['Apple Scab', 'Black Rot', 'Cedar Apple Rust', 'Healthy']
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="Plant Disease Detector", page_icon="🌿")
 st.title("🌿 Plant Disease Detection")
 st.markdown("Upload a plant leaf image to detect possible diseases using a deep learning model.")
 
@@ -103,7 +105,7 @@ uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg", "jpeg", "png"
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     # --- Preprocessing ---
     img = image.resize((224, 224))  # Update this size if your model uses something else
@@ -112,9 +114,14 @@ if uploaded_file is not None:
 
     # --- Prediction ---
     prediction = model.predict(img_array)
-    predicted_index = np.argmax(prediction)
-    confidence = np.max(prediction)
+    st.write(f"Prediction array: {prediction}")  # Debugging: Check the raw prediction output
 
-    # --- Output ---
-    st.success(f"🧠 Prediction: **{class_names[predicted_index]}**")
-    st.info(f"📊 Confidence: {confidence * 100:.2f}%")
+    # Ensure that the prediction array has the expected dimensions
+    if prediction.shape[0] > 0:
+        predicted_index = np.argmax(prediction)
+        confidence = np.max(prediction)
+        st.success(f"🧠 Prediction: **{class_names[predicted_index]}**")
+        st.info(f"📊 Confidence: {confidence * 100:.2f}%")
+    else:
+        st.error("❌ Prediction failed. Please check the model input and output.")
+
