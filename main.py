@@ -68,17 +68,21 @@ from PIL import Image
 import gdown
 import os
 
-# Google Drive model download
+# --- Model file and Google Drive URL ---
 model_file = "plant_model.h5"
 file_id = "1KnQ0U6y-nX4t428Yd0wMuq3y7qIe44Di"
 url = f"https://drive.google.com/uc?id={file_id}"
 
-# Download model if not present
+# --- Download model if not already present ---
 if not os.path.exists(model_file):
-    with st.spinner("Downloading model... Please wait."):
-        gdown.download(url, model_file, quiet=False)
+    with st.spinner("🔄 Downloading model file from Google Drive..."):
+        try:
+            gdown.download(url, model_file, quiet=False, fuzzy=True)
+        except Exception as e:
+            st.error(f"❌ Error downloading model: {e}")
+            st.stop()
 
-# Load model with caching
+# --- Load the model ---
 @st.cache_resource
 def load_model():
     model = tf.keras.models.load_model(model_file)
@@ -86,31 +90,31 @@ def load_model():
 
 model = load_model()
 
-# Example class labels – update with your actual class names
+# --- Class labels (update these to your actual classes) ---
 class_names = ['Apple Scab', 'Black Rot', 'Cedar Apple Rust', 'Healthy']
 
-# App UI
-st.set_page_config(page_title="Plant Disease Detection", page_icon="🌿")
+# --- Streamlit UI ---
+st.set_page_config(page_title="Plant Disease Detector", page_icon="🌿")
 st.title("🌿 Plant Disease Detection")
-st.write("Upload a plant leaf image and detect possible diseases using a trained deep learning model.")
+st.markdown("Upload a plant leaf image to detect possible diseases using a deep learning model.")
 
-# File uploader
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+# --- File uploader ---
+uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    # Preprocess image (resize and normalize)
-    img = image.resize((224, 224))  # Change if your model uses different input size
+    # --- Preprocessing ---
+    img = image.resize((224, 224))  # Update this size if your model uses something else
     img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)  # Shape: (1, 224, 224, 3)
+    img_array = np.expand_dims(img_array, axis=0)
 
-    # Predict
+    # --- Prediction ---
     prediction = model.predict(img_array)
     predicted_index = np.argmax(prediction)
     confidence = np.max(prediction)
 
-    # Show prediction
-    st.success(f"🧠 Predicted Disease: **{class_names[predicted_index]}**")
+    # --- Output ---
+    st.success(f"🧠 Prediction: **{class_names[predicted_index]}**")
     st.info(f"📊 Confidence: {confidence * 100:.2f}%")
