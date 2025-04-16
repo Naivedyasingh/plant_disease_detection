@@ -69,7 +69,7 @@ import gdown
 import os
 
 # --- Model file and Google Drive URL ---
-model_file = "plant_model.h5"
+model_file = "plant_disease_prediction_model.h5"
 file_id = "1KnQ0U6y-nX4t428Yd0wMuq3y7qIe44Di"
 url = f"https://drive.google.com/uc?id={file_id}"
 
