@@ -1,67 +1,4 @@
-'''
-import os
-import json
-from PIL import Image
-
-import numpy as np
-import tensorflow as tf
-import streamlit as st
-
-
-working_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = f"{working_dir}/trained_model/plant_disease_prediction_model.h5"
-# Load the pre-trained model
-model = tf.keras.models.load_model(model_path)
-
-# loading the class names
-class_indices = json.load(open(f"{working_dir}/class_indices.json"))
-
-
-# Function to Load and Preprocess the Image using Pillow
-def load_and_preprocess_image(image_path, target_size=(224, 224)):
-    # Load the image
-    img = Image.open(image_path)
-    # Resize the image
-    img = img.resize(target_size)
-    # Convert the image to a numpy array
-    img_array = np.array(img)
-    # Add batch dimension
-    img_array = np.expand_dims(img_array, axis=0)
-    # Scale the image values to [0, 1]
-    img_array = img_array.astype('float32') / 255.
-    return img_array
-
-
-# Function to Predict the Class of an Image
-def predict_image_class(model, image_path, class_indices):
-    preprocessed_img = load_and_preprocess_image(image_path)
-    predictions = model.predict(preprocessed_img)
-    predicted_class_index = np.argmax(predictions, axis=1)[0]
-    predicted_class_name = class_indices[str(predicted_class_index)]
-    return predicted_class_name
-
-
-# Streamlit App
-st.title('Plant Disease Classifier')
-
-uploaded_image = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
-
-if uploaded_image is not None:
-    image = Image.open(uploaded_image)
-    col1, col2 = st.columns(2)
-
-    with col1:
-        resized_img = image.resize((150, 150))
-        st.image(resized_img)
-
-    with col2:
-        if st.button('Classify'):
-            # Preprocess the uploaded image and predict the class
-            prediction = predict_image_class(model, uploaded_image, class_indices)
-            st.success(f'Prediction: {str(prediction)}')
-'''
-
-import streamlit as st
+'''import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
@@ -141,3 +78,80 @@ with col2:
         else:
             st.error("❌ Invalid model output. Check number of classes or input shape.")
 
+'''
+import streamlit as st
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+import gdown
+import os
+
+# Set page config
+st.set_page_config(page_title="🌿 Plant Disease Detector", page_icon="🧪", layout="centered")
+
+# --- Google Drive Model URL ---
+model_file = "plant_model.h5"
+file_id = "1KnQ0U6y-nX4t428Yd0wMuq3y7qIe44Di"
+url = f"https://drive.google.com/uc?id={file_id}"
+
+# --- Download model if not present ---
+if not os.path.exists(model_file):
+    with st.spinner("🔄 Downloading model from Google Drive..."):
+        try:
+            gdown.download(url, model_file, quiet=False, fuzzy=True)
+        except Exception as e:
+            st.error(f"❌ Error downloading model: {e}")
+            st.stop()
+
+# --- Load model (cached) ---
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model(model_file)
+
+model = load_model()
+
+# --- Class labels (38 classes) ---
+class_names = [ ... ]  # same list as before
+
+# --- UI Header ---
+st.markdown("<h1 style='text-align: center; color: #2E8B57;'>🌿 Plant Disease Detection</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 18px;'>Upload a plant leaf image to detect disease using our deep learning model</p>", unsafe_allow_html=True)
+st.markdown("---")
+
+# --- Upload Image Section ---
+uploaded_file = st.file_uploader("📷 **Upload Image**", type=["jpg", "jpeg", "png"])
+
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="🖼️ Uploaded Image", use_column_width=True)
+
+    # Preprocess the image
+    img = image.resize((224, 224))
+    img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+
+    st.markdown("---")
+    col_left, col_center, col_right = st.columns([1, 2, 1])
+    with col_center:
+        if st.button("🧪 **Classify Leaf Disease**", use_container_width=True):
+            with st.spinner("🔍 Analyzing image..."):
+                prediction = model.predict(img_array)
+                if prediction.shape[1] == len(class_names):
+                    predicted_index = np.argmax(prediction)
+                    predicted_class = class_names[predicted_index]
+                    confidence = np.max(prediction)
+
+                    st.markdown(f"""
+                    <div style='background-color: #e6ffe6; padding: 20px; border-radius: 10px; text-align: center;'>
+                        <h2 style='color: #2E8B57;'>🧠 Prediction: <b>{predicted_class}</b></h2>
+                        <p style='font-size: 18px;'>📊 Confidence: <b>{confidence * 100:.2f}%</b></p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.error("❌ Invalid model output. Please check model class count or input shape.")
+else:
+    st.info("⬆️ Please upload an image to get started.")
+
+# --- Footer ---
+st.markdown("---")
+st.markdown("<p style='text-align: center; font-size: 14px;'>🌱 Built with TensorFlow & Streamlit</p>", unsafe_allow_html=True)
