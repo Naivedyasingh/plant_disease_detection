@@ -1,4 +1,4 @@
-'''import streamlit as st
+import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
@@ -155,3 +155,4 @@ else:
 # --- Footer ---
 st.markdown("---")
 st.markdown("<p style='text-align: center; font-size: 14px;'>🌱 Built with TensorFlow & Streamlit</p>", unsafe_allow_html=True)
+'''
