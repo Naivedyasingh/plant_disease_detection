@@ -133,6 +133,9 @@ st.markdown("Upload a plant leaf image to classify the disease using a deep lear
 # --- Upload image ---
 uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg", "jpeg", "png"])
 
+# --- Confidence threshold ---
+CONFIDENCE_THRESHOLD = 0.85  # 85% confidence minimum
+
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_container_width=True)
@@ -151,7 +154,7 @@ if uploaded_file is not None:
                 predicted_index = np.argmax(prediction)
                 confidence = np.max(prediction)
 
-                if confidence < 0.7:
+                if confidence < CONFIDENCE_THRESHOLD:
                     st.warning("🤔 Unable to confidently identify the plant leaf.")
                     st.info("🧠 Prediction: **Unknown**")
                     st.info(f"📊 Confidence: {confidence * 100:.2f}%")
